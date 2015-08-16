@@ -18,12 +18,8 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
-import android.widget.BaseAdapter;
 import android.widget.Button;
 import android.widget.GridView;
-import android.widget.ImageView;
-
-import com.squareup.picasso.Picasso;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -110,73 +106,7 @@ public class MainFragment extends Fragment {
         return view;
     }
 
-    public class ImageAdapter extends BaseAdapter {
-        private Context mContext;
-        private HashMap<String, String>[] mMoviesData;
-        private GridView gridView;
 
-        public ImageAdapter(Context c, GridView gView) {
-            mContext = c;
-            mMovieAdapter = null;
-            gridView = gView;
-        }
-
-        @Override
-        public int getCount() {
-            return mMoviesData.length;
-        }
-
-        @Override
-        public Object getItem(int position) {
-            return mMoviesData[position];
-        }
-
-        @Override
-        public long getItemId(int position) {
-            return 0;
-        }
-
-        @Override
-        public void notifyDataSetChanged() {
-            super.notifyDataSetChanged();
-        }
-
-        public void clearAll() {
-            gridView.removeAllViewsInLayout();
-        }
-
-        public void addAll(HashMap<String, String>[] data) {
-            mMoviesData = null;
-            mMoviesData = data;
-            gridView.setAdapter(this);
-        }
-
-        // create a new ImageView for each item referenced by the Adapter
-        @Override
-        public View getView(int position, View convertView, ViewGroup parent) {
-            ImageView imageView;
-            if (convertView == null) {
-                // if it's not recycled, initialize some attributes
-                imageView = new ImageView(mContext);
-                //imageView.setAdjustViewBounds(true);
-                imageView.setLayoutParams(new GridView.LayoutParams(gridView.getWidth() / 2,
-                        gridView.getWidth() * 3 / 4));
-                imageView.setScaleType(ImageView.ScaleType.FIT_XY);
-                imageView.setPadding(4, 4, 4, 4);
-            } else {
-                imageView = (ImageView) convertView;
-            }
-
-            String posterUrl = mMoviesData[position].get(getString(R.string.data_poster_url));
-            if (posterUrl != null)
-                Picasso.with(getActivity()).load(posterUrl).into(imageView);
-
-            else
-                Picasso.with(getActivity()).load(R.drawable.no_image_available).into(imageView);
-
-            return imageView;
-        }
-    }
 
     public class FetchMovieTask extends AsyncTask<String, Void, HashMap<String, String>[]> {
         private final String LOG_TAG = FetchMovieTask.class.getName();
