@@ -3,6 +3,8 @@ package com.example.android.movieapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
@@ -41,7 +43,6 @@ import java.util.HashMap;
  */
 public class MainFragment extends Fragment {
     private ImageAdapter mMovieAdapter;
-    private boolean mIsConnected;           //flag used to check for internet connectiveity
 
     public MainFragment() {
     }
@@ -184,14 +185,13 @@ public class MainFragment extends Fragment {
         protected HashMap<String, String>[] doInBackground(String... params) {
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
-            mIsConnected = true;
 
             //This string will hold the json response as a string
             String movieJsonStr = "";
 
             String sortOrder = params[0];
             //Subtitute the string "key" with your real key
-            String key = "key";
+            String key = "Key";
             String pageNum = "1";  //params[1];
 
             try {
@@ -242,7 +242,6 @@ public class MainFragment extends Fragment {
             } catch (IOException e) {
                 //Log.e(LOG_TAG, "Error", e);
                 //If the code didn't successfully get weather data, no need to parse it
-                mIsConnected = false;
                 movieJsonStr = null;
             } finally {
                 if (urlConnection != null) {
@@ -295,7 +294,7 @@ public class MainFragment extends Fragment {
             for (int i = 0; i < totalNumOfMovies; i++) {
                 // Get the JSON object representing the movie data
                 JSONObject movieData = movieArray.getJSONObject(i);
-                allMoviesData[i] = new HashMap<String, String>();
+                allMoviesData[i] = new HashMap<>();
 
                 allMoviesData[i].put(MDB_TITLE, movieData.getString(MDB_TITLE));
                 allMoviesData[i].put(MDB_RELEASEDATE, movieData.getString(MDB_RELEASEDATE));
@@ -304,8 +303,8 @@ public class MainFragment extends Fragment {
 
                 String posterUniqueUrl     = movieData.getString(MDB_POSTER);
                 String backgroundUniqueUrl = movieData.getString(MDB_BG);
-                Uri moviePosterUri = null;
-                Uri movieBackgroundUri = null;
+                Uri moviePosterUri;
+                Uri movieBackgroundUri;
 
                 //Make sure that the movie has an available poster
                 if (posterUniqueUrl != "null") {
@@ -332,26 +331,28 @@ public class MainFragment extends Fragment {
         @Override
         protected void onPostExecute(HashMap<String, String>[] result) {
             if (result != null) {
-                mIsConnected = true;
                 mMovieAdapter.clearAll();
                 mMovieAdapter.addAll(result);
             }
-
-            visualizeViews();
         }
     }
 
     //This will update the gridView with the new data
     private void updateMovies() {
-        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        String sortType = pref.getString(getString(R.string.pref_sort_key),
-                getString(R.string.pref_sort_default));
-        new FetchMovieTask().execute(sortType);
+        if (isNetworkAvailable()) {
+            visualizeViews(true);
+            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            String sortType = pref.getString(getString(R.string.pref_sort_key),
+                    getString(R.string.pref_sort_default));
+            new FetchMovieTask().execute(sortType);
+        }
+        else
+            visualizeViews(false);
     }
 
     //This method is used to show or hide the main page views depedning on connection
-    private void visualizeViews() {
-        if (mIsConnected == true) {
+    private void visualizeViews(boolean isConnected) {
+        if (isConnected) {
             getActivity().findViewById(R.id.main_noConnection_text).setVisibility(View.INVISIBLE);
             getActivity().findViewById(R.id.main_retry_button).setVisibility(View.INVISIBLE);
             getActivity().findViewById(R.id.gridView_thumbnail).setVisibility(View.VISIBLE);
@@ -361,5 +362,12 @@ public class MainFragment extends Fragment {
             getActivity().findViewById(R.id.main_noConnection_text).setVisibility(View.VISIBLE);
             getActivity().findViewById(R.id.main_retry_button).setVisibility(View.VISIBLE);
         }
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getActivity().getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 }
