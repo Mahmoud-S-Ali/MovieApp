@@ -3,6 +3,7 @@ package com.example.android.movieapp;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.res.Configuration;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
@@ -85,7 +86,10 @@ public class MainFragment extends Fragment {
 
         GridView gridview = (GridView)view.findViewById(R.id.gridView_thumbnail);
         mMovieAdapter = new ImageAdapter(getActivity(), gridview);
-
+        if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
+        {
+            gridview.setNumColumns(5);
+        }
         gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position,
                                     long id) {
