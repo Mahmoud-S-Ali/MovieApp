@@ -43,7 +43,8 @@
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="@dimen/detail_middleLayout_height"
+            android:layout_height="wrap_content"
+            android:minHeight="@dimen/detail_middleLayout_height"
             android:layout_marginLeft="@dimen/detail_medium_padding"
             android:layout_marginRight="@dimen/detail_medium_padding"
             android:layout_marginTop="@dimen/detail_medium_padding"
@@ -71,8 +72,7 @@
                     android:singleLine="false"
                     android:text="Interstellar"
                     android:textColor="@color/darkGray"
-                    android:textSize="@dimen/detail_medium_textSize"
-                    android:maxLines="3"/>
+                    android:textSize="@dimen/detail_medium_textSize" />
 
                 <TextView
                     android:id="@+id/detail_release_date_text"
