@@ -72,9 +72,8 @@ public class DetailActivity extends ActionBarActivity {
             // The detail Activity called via intent.  Inspect the intent for forecast data.
             Intent intent = getActivity().getIntent();
             if (intent != null) {
-                HashMap<String, String> movieData = (HashMap<String, String>)
-                        intent.getSerializableExtra("movieData");
-
+                MyMovie movie = intent.getExtras().getParcelable("selectedMovie");
+                HashMap<String, String> movieData = movie.getMovieDetails();
                 setViews(rootView, movieData);
             }
 

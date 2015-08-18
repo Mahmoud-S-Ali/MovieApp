@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 
@@ -39,7 +40,8 @@ import java.util.HashMap;
  * A placeholder fragment containing a simple view.
  */
 public class MainFragment extends Fragment {
-    private ImageAdapter mMovieAdapter;
+    private MovieImageAdapter mMovieAdapter;
+    private ArrayList<MyMovie> mListOfMovies;
 
     public MainFragment() {
     }
@@ -47,7 +49,6 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //setHasOptionsMenu(true);
     }
 
     @Override
@@ -85,7 +86,7 @@ public class MainFragment extends Fragment {
         //String LOG_TAG = getActivity().getClass().getName();
 
         GridView gridview = (GridView)view.findViewById(R.id.gridView_thumbnail);
-        mMovieAdapter = new ImageAdapter(getActivity(), gridview);
+        mMovieAdapter = new MovieImageAdapter(getActivity(), gridview);
         if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
         {
             gridview.setNumColumns(5);
@@ -95,28 +96,27 @@ public class MainFragment extends Fragment {
                                     long id) {
                 //Toast.makeText(getActivity(), "" + position, Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
-                intent.putExtra("movieData", (HashMap) mMovieAdapter.getItem(position));
+                intent.putExtra("selectedMovie", (MyMovie) mMovieAdapter.getItem(position));
                 startActivity(intent);
             }
         });
 
         Button retryButton = (Button)view.findViewById(R.id.main_retry_button);
         retryButton.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v){
+            public void onClick(View v) {
                 updateMovies();
             }
-            });
+        });
 
         return view;
     }
 
 
-
-    public class FetchMovieTask extends AsyncTask<String, Void, HashMap<String, String>[]> {
+    public class FetchMovieTask extends AsyncTask<String, Void, ArrayList<MyMovie>> {
         private final String LOG_TAG = FetchMovieTask.class.getName();
 
         @Override
-        protected HashMap<String, String>[] doInBackground(String... params) {
+        protected ArrayList<MyMovie> doInBackground(String... params) {
             HttpURLConnection urlConnection = null;
             BufferedReader reader = null;
 
@@ -201,7 +201,7 @@ public class MainFragment extends Fragment {
             return null;
         }
 
-        private HashMap<String, String>[] getMoviesDataFromJson(String movieJsonStr)
+        private ArrayList<MyMovie> getMoviesDataFromJson(String movieJsonStr)
                 throws JSONException {
 
             if (movieJsonStr == null)
@@ -217,23 +217,22 @@ public class MainFragment extends Fragment {
             final String POSTER_SIZE     = getString(R.string.poster_size);
             final String BG_SIZE         = getString(R.string.background_size);
 
-
             JSONObject movieJson = new JSONObject(movieJsonStr);
             JSONArray movieArray = movieJson.getJSONArray(MDB_RESULTS);
 
             int totalNumOfMovies = movieArray.length();
-            HashMap<String, String>[] allMoviesData = new HashMap[totalNumOfMovies];
+            ArrayList<MyMovie> movieList = new ArrayList<>();
             String IMAGE_BASE_URL = "http://image.tmdb.org/t/p/";
 
             for (int i = 0; i < totalNumOfMovies; i++) {
                 // Get the JSON object representing the movie data
+                HashMap<String, String> movieDataMap = new HashMap<>();
                 JSONObject movieData = movieArray.getJSONObject(i);
-                allMoviesData[i] = new HashMap<>();
 
-                allMoviesData[i].put(MDB_TITLE, movieData.getString(MDB_TITLE));
-                allMoviesData[i].put(MDB_RELEASEDATE, movieData.getString(MDB_RELEASEDATE));
-                allMoviesData[i].put(MDB_VOTEAVG, movieData.getString(MDB_VOTEAVG));
-                allMoviesData[i].put(MDB_OVERVIEW, movieData.getString(MDB_OVERVIEW));
+                movieDataMap.put(MDB_TITLE, movieData.getString(MDB_TITLE));
+                movieDataMap.put(MDB_RELEASEDATE, movieData.getString(MDB_RELEASEDATE));
+                movieDataMap.put(MDB_VOTEAVG, movieData.getString(MDB_VOTEAVG));
+                movieDataMap.put(MDB_OVERVIEW, movieData.getString(MDB_OVERVIEW));
 
                 String posterUniqueUrl     = movieData.getString(MDB_POSTER);
                 String backgroundUniqueUrl = movieData.getString(MDB_BG);
@@ -247,7 +246,7 @@ public class MainFragment extends Fragment {
                             .appendEncodedPath(posterUniqueUrl)
                             .build();
 
-                    allMoviesData[i].put(MDB_POSTER, moviePosterUri.toString());
+                    movieDataMap.put(MDB_POSTER, moviePosterUri.toString());
                 }
 
                 if (backgroundUniqueUrl != "null") {
@@ -256,14 +255,17 @@ public class MainFragment extends Fragment {
                             .appendEncodedPath(backgroundUniqueUrl)
                             .build();
 
-                    allMoviesData[i].put(MDB_BG, movieBackgroundUri.toString());
+                    movieDataMap.put(MDB_BG, movieBackgroundUri.toString());
                 }
+
+                movieList.add(new MyMovie(movieDataMap));
             }
-            return allMoviesData;
+
+            return movieList;
         }
 
         @Override
-        protected void onPostExecute(HashMap<String, String>[] result) {
+        protected void onPostExecute(ArrayList<MyMovie> result) {
             if (result != null) {
                 mMovieAdapter.clearAll();
                 mMovieAdapter.addAll(result);
