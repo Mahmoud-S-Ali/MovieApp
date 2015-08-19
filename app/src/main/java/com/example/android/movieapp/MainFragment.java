@@ -313,8 +313,6 @@ public class MainFragment extends Fragment {
     //This will update the gridView with the new data
     private void updateMovies() {
         if (mListOfMovies != null) {
-            mGridView.setVisibility(View.INVISIBLE);
-
             mMovieAdapter.clearAll();
             mMovieAdapter.addAll(mListOfMovies);
 
@@ -324,7 +322,7 @@ public class MainFragment extends Fragment {
 
             mListOfMovies = null;
             mPosition = GridView.INVALID_POSITION;
-            mGridView.setVisibility(View.VISIBLE);
+            visualizeViews(true);
         }
 
         else if (isNetworkAvailable()) {
@@ -346,9 +344,9 @@ public class MainFragment extends Fragment {
             mGridView.setVisibility(View.VISIBLE);
         }
         else {
-            getActivity().findViewById(R.id.gridView_thumbnail).setVisibility(View.INVISIBLE);
+            mGridView.setVisibility(View.INVISIBLE);
             getActivity().findViewById(R.id.main_noConnection_text).setVisibility(View.VISIBLE);
-            mGridView.setVisibility(View.VISIBLE);
+            getActivity().findViewById(R.id.main_retry_button).setVisibility(View.VISIBLE);
         }
     }
 
