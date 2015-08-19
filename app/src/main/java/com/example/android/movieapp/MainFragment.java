@@ -40,6 +40,8 @@ import java.util.HashMap;
  * A placeholder fragment containing a simple view.
  */
 public class MainFragment extends Fragment {
+    private static final String MOVIEAPI_KEY = "";
+
     private MovieImageAdapter mMovieAdapter;
     private ArrayList<MyMovie> mListOfMovies;
 
@@ -125,7 +127,7 @@ public class MainFragment extends Fragment {
 
             String sortOrder = params[0];
             //Subtitute the string "key" with your real key
-            String key = "Key";
+            String key = MOVIEAPI_KEY;
             String pageNum = "1";  //params[1];
 
             try {
