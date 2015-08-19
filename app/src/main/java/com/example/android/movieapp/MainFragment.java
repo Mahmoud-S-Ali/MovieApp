@@ -9,6 +9,7 @@ import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.util.Log;
@@ -40,10 +41,18 @@ import java.util.HashMap;
  * A placeholder fragment containing a simple view.
  */
 public class MainFragment extends Fragment {
-    private static final String MOVIEAPI_KEY = "";
+
+    private static final String MOVIEAPI_KEY = "INSERT YOUR MOVIE API KEY HERE";
+    private static final String SI_MOVIE_KEY = "SI_MOVIE_KEY";    //saved instance movie key
+    private static final String SI_POS_KEY = "SI_POS_KEY";
+
+    private int mPosition = GridView.INVALID_POSITION;
+    private GridView mGridView;
 
     private MovieImageAdapter mMovieAdapter;
     private ArrayList<MyMovie> mListOfMovies;
+
+
 
     public MainFragment() {
     }
@@ -51,6 +60,20 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        if (mListOfMovies != null) {
+            outState.putParcelableArrayList(SI_MOVIE_KEY,
+                    (ArrayList<? extends Parcelable>) mListOfMovies);
+        }
+
+        if (mPosition != GridView.INVALID_POSITION) {
+            outState.putInt(SI_POS_KEY, mPosition);
+        }
     }
 
     @Override
@@ -87,22 +110,27 @@ public class MainFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         //String LOG_TAG = getActivity().getClass().getName();
 
-        GridView gridview = (GridView)view.findViewById(R.id.gridView_thumbnail);
-        mMovieAdapter = new MovieImageAdapter(getActivity(), gridview);
+        mGridView = (GridView)view.findViewById(R.id.gridView_thumbnail);
+        mMovieAdapter = new MovieImageAdapter(getActivity(), mGridView);
         if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
         {
-            gridview.setNumColumns(5);
+            mGridView.setNumColumns(5);
         }
-        gridview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+        //Setting a listener for the grid view when clicking on any item
+        mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position,
                                     long id) {
-                //Toast.makeText(getActivity(), "" + position, Toast.LENGTH_SHORT).show();
+                mPosition= position;
+                mListOfMovies = mMovieAdapter.getAllItems();
+
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
                 intent.putExtra("selectedMovie", (MyMovie) mMovieAdapter.getItem(position));
                 startActivity(intent);
             }
         });
 
+        //Setting a listener for the retry button when there is no internet connection
         Button retryButton = (Button)view.findViewById(R.id.main_retry_button);
         retryButton.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -110,6 +138,13 @@ public class MainFragment extends Fragment {
             }
         });
 
+
+        //Return the last saved state if there is one
+        if (savedInstanceState != null && savedInstanceState.containsKey(SI_POS_KEY)) {
+            // The listview probably hasn't even been populated yet.  Actually perform the
+            // swapout in onLoadFinished.
+            mPosition = savedInstanceState.getInt(SI_POS_KEY);
+        }
         return view;
     }
 
@@ -277,7 +312,22 @@ public class MainFragment extends Fragment {
 
     //This will update the gridView with the new data
     private void updateMovies() {
-        if (isNetworkAvailable()) {
+        if (mListOfMovies != null) {
+            mGridView.setVisibility(View.INVISIBLE);
+
+            mMovieAdapter.clearAll();
+            mMovieAdapter.addAll(mListOfMovies);
+
+            if (mPosition != GridView.INVALID_POSITION) {
+                mGridView.smoothScrollToPosition(mPosition);
+            }
+
+            mListOfMovies = null;
+            mPosition = GridView.INVALID_POSITION;
+            mGridView.setVisibility(View.VISIBLE);
+        }
+
+        else if (isNetworkAvailable()) {
             visualizeViews(true);
             SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
             String sortType = pref.getString(getString(R.string.pref_sort_key),
@@ -293,12 +343,12 @@ public class MainFragment extends Fragment {
         if (isConnected) {
             getActivity().findViewById(R.id.main_noConnection_text).setVisibility(View.INVISIBLE);
             getActivity().findViewById(R.id.main_retry_button).setVisibility(View.INVISIBLE);
-            getActivity().findViewById(R.id.gridView_thumbnail).setVisibility(View.VISIBLE);
+            mGridView.setVisibility(View.VISIBLE);
         }
         else {
             getActivity().findViewById(R.id.gridView_thumbnail).setVisibility(View.INVISIBLE);
             getActivity().findViewById(R.id.main_noConnection_text).setVisibility(View.VISIBLE);
-            getActivity().findViewById(R.id.main_retry_button).setVisibility(View.VISIBLE);
+            mGridView.setVisibility(View.VISIBLE);
         }
     }
 
