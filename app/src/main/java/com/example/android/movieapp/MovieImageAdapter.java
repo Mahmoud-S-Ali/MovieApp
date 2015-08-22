@@ -67,9 +67,9 @@ public class MovieImageAdapter extends BaseAdapter {
             // if it's not recycled, initialize some attributes
             imageView = new ImageView(mContext);
             imageView.setAdjustViewBounds(true);
-            /*imageView.setLayoutParams(new GridView.LayoutParams(gridView.getWidth() / 2,
-                    gridView.getWidth() * 3 / 4));*/
-            imageView.setScaleType(ImageView.ScaleType.FIT_XY);
+            /*imageView.setLayoutParams(new GridView.LayoutParams(mGridView.getWidth() / 2,
+                    mGridView.getWidth() * 3 / 4));*/
+            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
             imageView.setPadding(4, 4, 4, 4);
         } else {
             imageView = (ImageView) convertView;
@@ -81,7 +81,7 @@ public class MovieImageAdapter extends BaseAdapter {
             Picasso.with(mContext).load(posterUrl).into(imageView);
 
         else
-            Picasso.with(mContext).load(R.drawable.no_image_available).into(imageView);
+            Picasso.with(mContext).load(R.drawable.no_photo_available).into(imageView);
 
         return imageView;
     }

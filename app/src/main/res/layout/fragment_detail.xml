@@ -58,7 +58,7 @@
                 android:layout_weight="1"
                 android:padding="@dimen/detail_small_padding"
                 android:scaleType="fitXY"
-                android:src="@drawable/sample" />
+                android:src="@drawable/sample_185" />
 
             <RelativeLayout
                 android:layout_width="0dip"

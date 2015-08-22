@@ -45,6 +45,7 @@ public class MainFragment extends Fragment {
     private static final String MOVIEAPI_KEY = "INSERT YOUR MOVIE API KEY HERE";
     private static final String SI_MOVIE_KEY = "SI_MOVIE_KEY";    //saved instance movie key
     private static final String SI_POS_KEY = "SI_POS_KEY";
+    private static final String SI_SORT_KEY = "SI_SORT_KEY";
 
     private int mPosition = GridView.INVALID_POSITION;
     private GridView mGridView;
@@ -52,7 +53,8 @@ public class MainFragment extends Fragment {
     private MovieImageAdapter mMovieAdapter;
     private ArrayList<MyMovie> mListOfMovies;
 
-
+    private String mPrevSortType;       //Check if the sort type has changed so as to update
+    private String mCurrentSortType;
 
     public MainFragment() {
     }
@@ -60,12 +62,25 @@ public class MainFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SI_SORT_KEY)) {
+            mPrevSortType = savedInstanceState.getString(SI_SORT_KEY);
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SI_MOVIE_KEY)) {
+            mListOfMovies = savedInstanceState.getParcelableArrayList(SI_MOVIE_KEY);
+        }
+
+        if (savedInstanceState != null && savedInstanceState.containsKey(SI_POS_KEY)) {
+            mPosition = savedInstanceState.getInt(SI_POS_KEY);
+        }
     }
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        mListOfMovies = mMovieAdapter.getAllItems();
         if (mListOfMovies != null) {
             outState.putParcelableArrayList(SI_MOVIE_KEY,
                     (ArrayList<? extends Parcelable>) mListOfMovies);
@@ -74,12 +89,28 @@ public class MainFragment extends Fragment {
         if (mPosition != GridView.INVALID_POSITION) {
             outState.putInt(SI_POS_KEY, mPosition);
         }
+
+        outState.putString(SI_SORT_KEY, mCurrentSortType);
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        updateMovies();
+
+        SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
+        mCurrentSortType = pref.getString(getString(R.string.pref_sort_key),
+                getString(R.string.pref_sort_default));
+        if (mListOfMovies == null || mCurrentSortType != mPrevSortType) {
+            updateMovies();
+            mPrevSortType = mCurrentSortType;
+        }
+        else {
+            visualizeViews(true);
+            mMovieAdapter.addAll(mListOfMovies);
+            if (mPosition != GridView.INVALID_POSITION) {
+                mGridView.setSelection(mPosition);
+            }
+        }
     }
 
     @Override
@@ -117,13 +148,13 @@ public class MainFragment extends Fragment {
             mGridView.setNumColumns(5);
         }
 
+        //mListOfMovies = mMovieAdapter.getAllItems();
+        //mPosition = mGridView.getLastVisiblePosition();
         //Setting a listener for the grid view when clicking on any item
         mGridView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             public void onItemClick(AdapterView<?> parent, View v, int position,
                                     long id) {
                 mPosition= position;
-                mListOfMovies = mMovieAdapter.getAllItems();
-
                 Intent intent = new Intent(getActivity(), DetailActivity.class);
                 intent.putExtra("selectedMovie", (MyMovie) mMovieAdapter.getItem(position));
                 startActivity(intent);
@@ -140,11 +171,10 @@ public class MainFragment extends Fragment {
 
 
         //Return the last saved state if there is one
-        if (savedInstanceState != null && savedInstanceState.containsKey(SI_POS_KEY)) {
-            // The listview probably hasn't even been populated yet.  Actually perform the
-            // swapout in onLoadFinished.
-            mPosition = savedInstanceState.getInt(SI_POS_KEY);
-        }
+        /*if (savedInstanceState != null && savedInstanceState.containsKey(SI_POS_KEY)) {
+            mListOfMovies = savedInstanceState.getParcelableArrayList(SI_MOVIE_KEY);
+            //mPosition = savedInstanceState.getInt(SI_POS_KEY);
+        }*/
         return view;
     }
 
@@ -312,25 +342,10 @@ public class MainFragment extends Fragment {
 
     //This will update the gridView with the new data
     private void updateMovies() {
-        if (mListOfMovies != null) {
-            mMovieAdapter.clearAll();
-            mMovieAdapter.addAll(mListOfMovies);
 
-            if (mPosition != GridView.INVALID_POSITION) {
-                mGridView.smoothScrollToPosition(mPosition);
-            }
-
-            mListOfMovies = null;
-            mPosition = GridView.INVALID_POSITION;
+        if (isNetworkAvailable()) {
             visualizeViews(true);
-        }
-
-        else if (isNetworkAvailable()) {
-            visualizeViews(true);
-            SharedPreferences pref = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            String sortType = pref.getString(getString(R.string.pref_sort_key),
-                    getString(R.string.pref_sort_default));
-            new FetchMovieTask().execute(sortType);
+            new FetchMovieTask().execute(mCurrentSortType);
         }
         else
             visualizeViews(false);
