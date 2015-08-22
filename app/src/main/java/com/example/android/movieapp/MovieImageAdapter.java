@@ -1,6 +1,7 @@
 package com.example.android.movieapp;
 
 import android.content.Context;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
@@ -10,6 +11,7 @@ import android.widget.ImageView;
 import com.squareup.picasso.Picasso;
 
 import java.util.ArrayList;
+import java.util.zip.Inflater;
 
 /**
  * Created by Toty on 8/16/2015.
@@ -18,11 +20,13 @@ public class MovieImageAdapter extends BaseAdapter {
     private Context mContext;
     ArrayList<MyMovie> mMovieList;
     private GridView mGridView;
+    private LayoutInflater mInflater;
 
     public MovieImageAdapter(Context c, GridView gView) {
         mContext = c;
         mGridView = gView;
         mMovieList = new ArrayList<>();
+        mInflater = LayoutInflater.from(mContext);
     }
 
     @Override
@@ -61,28 +65,34 @@ public class MovieImageAdapter extends BaseAdapter {
 
     // create a new ImageView for each item referenced by the Adapter
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-        ImageView imageView;
-        if (convertView == null) {
-            // if it's not recycled, initialize some attributes
-            imageView = new ImageView(mContext);
-            imageView.setAdjustViewBounds(true);
-            /*imageView.setLayoutParams(new GridView.LayoutParams(mGridView.getWidth() / 2,
-                    mGridView.getWidth() * 3 / 4));*/
-            imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-            imageView.setPadding(4, 4, 4, 4);
-        } else {
-            imageView = (ImageView) convertView;
+    public View getView(int position, View view, ViewGroup parent) {
+        View v = view;
+        ImageView thumbnail;
+        Inflater inflater;
+
+        if (v == null) {
+            v = mInflater.inflate(R.layout.grid_item, parent, false);
+            v.setTag(R.id.grid_thumbnail, v.findViewById(R.id.grid_thumbnail));
         }
+
+        thumbnail = (ImageView) v.getTag(R.id.grid_thumbnail);
 
         String posterUrl = mMovieList.get(position).getMovieDetails()
                 .get(mContext.getString(R.string.data_poster_url));
         if (posterUrl != null)
-            Picasso.with(mContext).load(posterUrl).into(imageView);
+            Picasso.with(mContext).load(posterUrl).into(thumbnail);
 
         else
-            Picasso.with(mContext).load(R.drawable.no_photo_available).into(imageView);
+            Picasso.with(mContext).load(R.drawable.no_photo_available).into(thumbnail);
 
-        return imageView;
+        return v;
+    }
+
+    private static class Item {
+        public final int drawableId;
+
+        Item(String name, int drawableId) {
+            this.drawableId = drawableId;
+        }
     }
 }
