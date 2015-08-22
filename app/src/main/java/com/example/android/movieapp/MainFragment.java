@@ -141,7 +141,7 @@ public class MainFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_main, container, false);
         //String LOG_TAG = getActivity().getClass().getName();
 
-        mGridView = (GridView)view.findViewById(R.id.gridView_thumbnail);
+        mGridView = (GridView)view.findViewById(R.id.main_gridView);
         mMovieAdapter = new MovieImageAdapter(getActivity(), mGridView);
         if(getActivity().getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE)
         {
